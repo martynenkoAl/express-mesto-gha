@@ -9,8 +9,8 @@ const {
 } = require("../controllers/users");
 
 router.get("/", getUsers);
-router.post("/", addUser);
 router.get("/:userId", getUserById);
+router.post("/", addUser);
 router.patch("/me", updateUserData);
 router.patch("/me/avatar", updateAvatar);
 

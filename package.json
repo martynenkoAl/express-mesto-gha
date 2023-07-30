@@ -6,12 +6,7 @@
   "scripts": {
     "lint": "npx eslint .",
     "start": "node app.js",
-    "dev": "nodemon app.js",
-    "lintfix": "npx eslint . --fix"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/martynenkoAl/express-mesto-gha.git"
+    "dev": "nodemon app.js"
   },
   "author": "Alina Martynenko",
   "license": "ISC",
