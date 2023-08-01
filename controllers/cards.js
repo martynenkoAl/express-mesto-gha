@@ -1,10 +1,21 @@
 const Card = require("../models/card");
+const mongoose = require("mongoose");
+
+const {
+  STATUS_OK,
+  STATUS_CREATED,
+  STATUS_BAD_REQUEST,
+  STATUS_NOT_FOUND,
+  STATUS_INTERNAL_SERVER_ERROR,
+} = require("../utils/constants");
 
 module.exports.getCards = (req, res) => {
   Card.find({})
-    .then((cards) => res.send(cards))
+    .then((cards) => res.status(STATUS_OK).send(cards))
     .catch(() =>
-      res.status(500).send({ message: "На сервере произошла ошибка" })
+      res
+        .status(STATUS_INTERNAL_SERVER_ERROR)
+        .send({ message: "На сервере произошла ошибка" })
     );
 };
 
@@ -13,12 +24,14 @@ module.exports.createCard = (req, res) => {
   const owner = req.user._id;
 
   Card.create({ name, link, owner })
-    .then((card) => res.send(card))
+    .then((card) => res.status(STATUS_CREATED).send(card))
     .catch((error) => {
-      if (error.name === "ValidationError") {
-        res.status(400).send({ message: error.message });
+      if (error instanceof mongoose.Error.ValidationError) {
+        res.status(STATUS_BAD_REQUEST).send({ message: error.message });
       } else {
-        res.status(500).send({ message: "На сервере произошла ошибка" });
+        res
+          .status(STATUS_INTERNAL_SERVER_ERROR)
+          .send({ message: "На сервере произошла ошибка" });
       }
     });
 };
@@ -26,14 +39,18 @@ module.exports.createCard = (req, res) => {
 module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
     .orFail(() => {
-      res.status(404).send({ message: "Карточка с таким id не найдена" });
+      res
+        .status(STATUS_NOT_FOUND)
+        .send({ message: "Карточка с таким id не найдена" });
     })
     .then((card) => res.send(card))
     .catch((error) => {
-      if (error.name === "CastError") {
-        res.status(400).send({ message: error.message });
+      if (error instanceof mongoose.Error.CastError) {
+        res.status(STATUS_BAD_REQUEST).send({ message: error.message });
       } else {
-        res.status(500).send({ message: "На сервере произошла ошибка" });
+        res
+          .status(STATUS_INTERNAL_SERVER_ERROR)
+          .send({ message: "На сервере произошла ошибка" });
       }
     });
 };
@@ -45,14 +62,18 @@ module.exports.likeCard = (req, res) => {
     { new: true }
   )
     .orFail(() => {
-      res.status(404).send({ message: "Карточка с таким id не найдена" });
+      res
+        .status(STATUS_NOT_FOUND)
+        .send({ message: "Карточка с таким id не найдена" });
     })
     .then((like) => res.send(like))
     .catch((error) => {
-      if (error.name === "CastError") {
-        res.status(400).send({ message: error.message });
+      if (error instanceof mongoose.Error.CastError) {
+        res.status(STATUS_BAD_REQUEST).send({ message: error.message });
       } else {
-        res.status(500).send({ message: "На сервере произошла ошибка" });
+        res
+          .status(STATUS_INTERNAL_SERVER_ERROR)
+          .send({ message: "На сервере произошла ошибка" });
       }
     });
 };
@@ -64,14 +85,18 @@ module.exports.dislikeCard = (req, res) => {
     { new: true }
   )
     .orFail(() => {
-      res.status(404).send({ message: "Карточка с таким id не найдена" });
+      res
+        .status(STATUS_NOT_FOUND)
+        .send({ message: "Карточка с таким id не найдена" });
     })
     .then((like) => res.send(like))
     .catch((error) => {
-      if (error.name === "CastError") {
-        res.status(400).send({ message: error.message });
+      if (error instanceof mongoose.Error.CastError) {
+        res.status(STATUS_BAD_REQUEST).send({ message: error.message });
       } else {
-        res.status(500).send({ message: "На сервере произошла ошибка" });
+        res
+          .status(STATUS_INTERNAL_SERVER_ERROR)
+          .send({ message: "На сервере произошла ошибка" });
       }
     });
 };
