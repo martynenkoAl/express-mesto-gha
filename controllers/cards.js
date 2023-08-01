@@ -1,5 +1,5 @@
-const Card = require("../models/card");
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
+const Card = require('../models/card');
 
 const {
   STATUS_OK,
@@ -7,16 +7,14 @@ const {
   STATUS_BAD_REQUEST,
   STATUS_NOT_FOUND,
   STATUS_INTERNAL_SERVER_ERROR,
-} = require("../utils/constants");
+} = require('../utils/constants');
 
 module.exports.getCards = (req, res) => {
   Card.find({})
     .then((cards) => res.status(STATUS_OK).send(cards))
-    .catch(() =>
-      res
-        .status(STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: "На сервере произошла ошибка" })
-    );
+    .catch(() => res
+      .status(STATUS_INTERNAL_SERVER_ERROR)
+      .send({ message: 'На сервере произошла ошибка' }));
 };
 
 module.exports.createCard = (req, res) => {
@@ -31,7 +29,7 @@ module.exports.createCard = (req, res) => {
       } else {
         res
           .status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: "На сервере произошла ошибка" });
+          .send({ message: 'На сервере произошла ошибка' });
       }
     });
 };
@@ -41,7 +39,7 @@ module.exports.deleteCard = (req, res) => {
     .orFail(() => {
       res
         .status(STATUS_NOT_FOUND)
-        .send({ message: "Карточка с таким id не найдена" });
+        .send({ message: 'Карточка с таким id не найдена' });
     })
     .then((card) => res.send(card))
     .catch((error) => {
@@ -50,7 +48,7 @@ module.exports.deleteCard = (req, res) => {
       } else {
         res
           .status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: "На сервере произошла ошибка" });
+          .send({ message: 'На сервере произошла ошибка' });
       }
     });
 };
@@ -59,12 +57,12 @@ module.exports.likeCard = (req, res) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
-    { new: true }
+    { new: true },
   )
     .orFail(() => {
       res
         .status(STATUS_NOT_FOUND)
-        .send({ message: "Карточка с таким id не найдена" });
+        .send({ message: 'Карточка с таким id не найдена' });
     })
     .then((like) => res.send(like))
     .catch((error) => {
@@ -73,7 +71,7 @@ module.exports.likeCard = (req, res) => {
       } else {
         res
           .status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: "На сервере произошла ошибка" });
+          .send({ message: 'На сервере произошла ошибка' });
       }
     });
 };
@@ -82,12 +80,12 @@ module.exports.dislikeCard = (req, res) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
-    { new: true }
+    { new: true },
   )
     .orFail(() => {
       res
         .status(STATUS_NOT_FOUND)
-        .send({ message: "Карточка с таким id не найдена" });
+        .send({ message: 'Карточка с таким id не найдена' });
     })
     .then((like) => res.send(like))
     .catch((error) => {
@@ -96,7 +94,7 @@ module.exports.dislikeCard = (req, res) => {
       } else {
         res
           .status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: "На сервере произошла ошибка" });
+          .send({ message: 'На сервере произошла ошибка' });
       }
     });
 };

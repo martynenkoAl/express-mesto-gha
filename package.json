@@ -6,7 +6,8 @@
   "scripts": {
     "lint": "npx eslint .",
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "fix": "npx eslint . --fix"
   },
   "author": "Alina Martynenko",
   "license": "ISC",

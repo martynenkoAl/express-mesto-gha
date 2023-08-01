@@ -1,34 +1,34 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const cardSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      minlength: [2, "Название не может быть короче двух символов"],
-      maxlength: [30, "Название не может быть длиннее 30 символов"],
-      required: [true, "Поле не может быть пустым"],
+      minlength: [2, 'Название не может быть короче двух символов'],
+      maxlength: [30, 'Название не может быть длиннее 30 символов'],
+      required: [true, 'Поле не может быть пустым'],
     },
     link: {
       type: String,
-      required: [true, "Поле не может быть пустым"],
+      required: [true, 'Поле не может быть пустым'],
       validate: {
         validator(v) {
           return /(?:https?):\/\/(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-/]))?/.test(
-            v
+            v,
           );
         },
-        message: "Неверный формат URL",
+        message: 'Неверный формат URL',
       },
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      ref: 'user',
       required: true,
     },
     likes: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "user",
+        ref: 'user',
         default: [],
       },
     ],
@@ -37,7 +37,7 @@ const cardSchema = new mongoose.Schema(
       default: Date.now,
     },
   },
-  { versionKey: false }
+  { versionKey: false },
 );
 
-module.exports = mongoose.model("card", cardSchema);
+module.exports = mongoose.model('card', cardSchema);
