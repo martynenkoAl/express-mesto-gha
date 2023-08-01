@@ -4,19 +4,19 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "Поле не может быть пустым"],
-      minlength: [2, "Имя короче двух символов"],
-      maxlength: [30, "Имя длиннее 30-ти символов"],
+      required: true,
+      minlength: 2,
+      maxlength: 30,
     },
     about: {
       type: String,
-      required: [true, "Поле не может быть пустым"],
-      minlength: [2, "Информация короче двух символов"],
-      maxlength: [30, "Информация длиннее 30-ти символов"],
+      required: true,
+      minlength: 2,
+      maxlength: 30,
     },
     avatar: {
       type: String,
-      required: [true, "Поле не может быть пустым"],
+      required: true,
       validate: {
         validator(v) {
           return /(?:https?):\/\/(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-/]))?/.test(

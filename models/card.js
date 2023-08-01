@@ -4,13 +4,13 @@ const cardSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      minlength: [2, "Название короче двух символов"],
-      maxlength: [30, "Название длиннее 30 символов"],
-      required: [true, "Поле не может быть пустым"],
+      minlength: 2,
+      maxlength: 30,
+      required: true,
     },
     link: {
       type: String,
-      required: [true, "Поле не может быть пустым"],
+      required: true,
       validate: {
         validator(v) {
           return /(?:https?):\/\/(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-/]))?/.test(
