@@ -1,90 +1,81 @@
 const User = require("../models/user");
 
-module.exports.getUsers = (req, res) => {
+const BadRequestError = require("../errors/BadRequestError");
+const NotFoundError = require("../errors/NotFoundError");
+
+module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send(users))
-    .catch(() =>
-      res.status(500).send({ message: "На сервере произошла ошибка" })
-    );
+    .catch(next);
 };
 
-module.exports.addUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
-    .then((user) => res.status(201).send(user))
-    .catch((err) => {
-      if (err.name === "ValidationError") {
-        res.status(400).send({ message: "Переданы некорректные данные" });
+module.exports.getUserById = (req, res, next) => {
+  User.findById(req.params.userId)
+    .orFail(() => {
+      throw new NotFoundError("Пользователь с таким id не найден");
+    })
+    .then((user) => res.send(user))
+    .catch((error) => {
+      if (error.name === "CastError") {
+        next(new BadRequestError("Переданы некорректные данные"));
       } else {
-        res.status(500).send({ message: "На сервере произошла ошибка" });
+        next(error);
       }
     });
 };
 
-module.exports.getUserById = (req, res) => {
-  if (req.params.userId.length === 24) {
-    User.findById(req.params.userId)
-      .then((user) => {
-        if (!user) {
-          res.status(404).send({ message: "Пользователь не найден" });
-          return;
-        }
-        res.send(user);
-      })
-      .catch(() => res.status(404).send({ message: "Пользователь не найден" }));
-  } else {
-    res.status(400).send({ message: "Переданы некорректные данные" });
-  }
+module.exports.addUser = (req, res, next) => {
+  const { name, about, avatar } = req.body;
+  User.create({ name, about, avatar })
+    .then((user) => res.status(201).send(user))
+    .catch((error) => {
+      if (error.name === "ValidationError") {
+        next(new BadRequestError("Переданы некорректные данные"));
+      } else {
+        next(error);
+      }
+    });
 };
 
-module.exports.updateUserData = (req, res) => {
+module.exports.updateUserData = (req, res, next) => {
   const { name, about } = req.body;
-  if (req.user._id) {
-    User.findByIdAndUpdate(
-      req.user._id,
-      { name, about },
-      {
-        new: true,
-        runValidators: true,
+  User.findByIdAndUpdate(
+    req.user._id,
+    { name, about },
+    {
+      new: true,
+      runValidators: true,
+      upsert: false,
+    }
+  )
+    .then((user) => {
+      res.send(user);
+    })
+    .catch((error) => {
+      if (error.name === "ValidationError") {
+        next(new BadRequestError("Переданы некорректные данные"));
+      } else {
+        next(error);
       }
-    )
-      .then((user) => {
-        res.send(user);
-      })
-      .catch((error) => {
-        if (error.name === "ValidationError") {
-          res.status(400).send({ message: "Переданы некорректные данные" });
-        } else {
-          res.status(404).send({ message: "Пользователь не найден" });
-        }
-      });
-  } else {
-    res.status(500).send({ message: "На сервере произошла ошибка" });
-  }
+    });
 };
 
-module.exports.updateAvatar = (req, res) => {
+module.exports.updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
-  if (req.user._id) {
-    User.findByIdAndUpdate(
-      req.user._id,
-      { avatar },
-      {
-        new: true,
-        runValidators: true,
+  User.findByIdAndUpdate(
+    req.user._id,
+    { avatar },
+    {
+      new: true,
+      runValidators: true,
+    }
+  )
+    .then((avatar) => res.send(avatar))
+    .catch((error) => {
+      if (error.name === "ValidationError") {
+        next(new BadRequestError("Переданы некорректные данные"));
+      } else {
+        next(error);
       }
-    )
-      .then((user) => res.send(user))
-      .catch((error) => {
-        if (error.name === "ValidationError") {
-          res
-            .status(400)
-            .send({ message: "Передан некорректный id пользователя" });
-        } else {
-          res.status(404).send({ message: "Пользователь не найден" });
-        }
-      });
-  } else {
-    res.status(500).send({ message: "На сервере произошла ошибка" });
-  }
+    });
 };

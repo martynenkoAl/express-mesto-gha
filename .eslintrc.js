@@ -22,4 +22,9 @@ module.exports = {
   },
   plugins: ["react"],
   rules: {},
+  settings: {
+    react: {
+      version: "detect",
+    },
+  },
 };

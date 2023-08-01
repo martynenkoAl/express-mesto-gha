@@ -4,20 +4,20 @@ const cardSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      minlength: 2,
-      maxlength: 30,
-      required: true,
+      minlength: [2, "Название короче двух символов"],
+      maxlength: [30, "Название длиннее 30 символов"],
+      required: [true, "Поле не может быть пустым"],
     },
     link: {
       type: String,
-      required: true,
+      required: [true, "Поле не может быть пустым"],
       validate: {
         validator(v) {
-          return /https?:\/\/(www)?[0-9a-z\-._~:/?#[\]@!$&'()*+,;=]+#?$/.test(
+          return /(?:https?):\/\/(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-/]))?/.test(
             v
           );
         },
-        message: "Неправильный URL",
+        message: "Неверный формат URL",
       },
     },
     owner: {
