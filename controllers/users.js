@@ -1,43 +1,39 @@
 const User = require("../models/user");
 
-const BadRequestError = require("../errors/BadRequestError");
-const NotFoundError = require("../errors/NotFoundError");
-
-module.exports.getUsers = (req, res, next) => {
-  User.find({})
-    .then((users) => res.send(users))
-    .catch(next);
+module.exports.getUsers = (req, res) => {
+  User.find({}).then((users) => res.send(users));
+  res.status(500).send({ message: "На сервере произошла ошибка" });
 };
 
-module.exports.getUserById = (req, res, next) => {
+module.exports.getUserById = (req, res) => {
   User.findById(req.params.userId)
     .orFail(() => {
-      throw new NotFoundError("Пользователь с таким id не найден");
+      res.status(404).send({ message: "Пользователь с таким id не найден" });
     })
     .then((user) => res.send(user))
     .catch((error) => {
       if (error.name === "CastError") {
-        next(new BadRequestError("Переданы некорректные данные"));
+        res.status(400).send({ message: error.message });
       } else {
-        next(error);
+        res.status(500).send({ message: "На сервере произошла ошибка" });
       }
     });
 };
 
-module.exports.addUser = (req, res, next) => {
+module.exports.addUser = (req, res) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
     .then((user) => res.status(201).send(user))
     .catch((error) => {
       if (error.name === "ValidationError") {
-        next(new BadRequestError("Переданы некорректные данные"));
+        res.status(400).send({ message: error.message });
       } else {
-        next(error);
+        res.status(500).send({ message: "На сервере произошла ошибка" });
       }
     });
 };
 
-module.exports.updateUserData = (req, res, next) => {
+module.exports.updateUserData = (req, res) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -53,9 +49,9 @@ module.exports.updateUserData = (req, res, next) => {
     })
     .catch((error) => {
       if (error.name === "ValidationError") {
-        next(new BadRequestError("Переданы некорректные данные"));
+        res.status(400).send({ message: error.message });
       } else {
-        next(error);
+        res.status(500).send({ message: "На сервере произошла ошибка" });
       }
     });
 };
@@ -73,9 +69,9 @@ module.exports.updateAvatar = (req, res, next) => {
     .then((avatar) => res.send(avatar))
     .catch((error) => {
       if (error.name === "ValidationError") {
-        next(new BadRequestError("Переданы некорректные данные"));
+        res.status(400).send({ message: error.message });
       } else {
-        next(error);
+        res.status(500).send({ message: "На сервере произошла ошибка" });
       }
     });
 };
