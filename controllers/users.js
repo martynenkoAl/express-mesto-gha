@@ -1,8 +1,11 @@
 const User = require("../models/user");
 
 module.exports.getUsers = (req, res) => {
-  User.find({}).then((users) => res.send(users));
-  res.status(500).send({ message: "На сервере произошла ошибка" });
+  User.find({})
+    .then((users) => res.send(users))
+    .catch(() =>
+      res.status(500).send({ message: "На сервере произошла ошибка" })
+    );
 };
 
 module.exports.getUserById = (req, res) => {
