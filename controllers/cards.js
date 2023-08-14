@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Card = require('../models/card');
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
-const Forbidden = require('../errors/Forbidden');
+const ForbiddenError = require('../errors/ForbiddenError');
 
 const { STATUS_OK, STATUS_CREATED } = require('../utils/constants');
 
@@ -28,15 +28,17 @@ module.exports.createCard = (req, res, next) => {
 };
 
 module.exports.deleteCard = (req, res, next) => {
-  Card.findByIdAndRemove(req.params.cardId)
+  Card.findById(req.params.cardId)
     .orFail(() => {
       throw new NotFoundError('Карточка с таким id не найдена');
     })
     .then((card) => {
-      if (card.owner.toString() === req.user._id) {
-        res.send(card);
+      if (card.owner.equals(req.user._id)) {
+        Card.findByIdAndRemove(req.params.cardId)
+          .then((cardData) => res.send(cardData))
+          .catch(next);
       } else {
-        next(new Forbidden('Недостаточно прав'));
+        next(new ForbiddenError('Недостаточно прав на удаление карточки'));
       }
     })
     .catch((error) => {
@@ -52,7 +54,7 @@ module.exports.likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
-    { new: true }
+    { new: true },
   )
     .orFail(() => {
       throw new NotFoundError('Карточка с таким id не найдена');
@@ -71,7 +73,7 @@ module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
-    { new: true }
+    { new: true },
   )
     .orFail(() => {
       throw new NotFoundError('Карточка с таким id не найдена');

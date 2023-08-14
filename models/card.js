@@ -13,7 +13,7 @@ const cardSchema = new mongoose.Schema(
       required: [true, 'Поле не может быть пустым'],
       validate: {
         validator(v) {
-          return /(?:https?):\/\/(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-/]))?/.test(
+          return /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/.test(
             v,
           );
         },
