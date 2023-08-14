@@ -1,57 +1,87 @@
+const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 const User = require('../models/user');
+const BadRequestError = require('../errors/BadRequestError');
+const NotFoundError = require('../errors/NotFoundError');
+const Conflict = require('../errors/Conflict');
 
-const {
-  STATUS_OK,
-  STATUS_CREATED,
-  STATUS_BAD_REQUEST,
-  STATUS_NOT_FOUND,
-  STATUS_INTERNAL_SERVER_ERROR,
-} = require('../utils/constants');
+const { STATUS_OK, STATUS_CREATED } = require('../utils/constants');
 
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.status(STATUS_OK).send(users))
-    .catch(() => res
-      .status(STATUS_INTERNAL_SERVER_ERROR)
-      .send({ message: 'На сервере произошла ошибка' }));
+    .catch(next);
 };
 
-module.exports.getUserById = (req, res) => {
+module.exports.getUserById = (req, res, next) => {
   User.findById(req.params.userId)
     .orFail(() => {
-      res
-        .status(STATUS_NOT_FOUND)
-        .send({ message: 'Пользователь с таким id не найден' });
+      throw new NotFoundError('Пользователь с таким id не найден');
     })
     .then((user) => res.send(user))
     .catch((error) => {
       if (error instanceof mongoose.Error.CastError) {
-        res.status(STATUS_BAD_REQUEST).send({ message: error.message });
+        next(new BadRequestError(error.message));
       } else {
-        res
-          .status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: 'На сервере произошла ошибка' });
+        next(error);
       }
     });
 };
 
-module.exports.addUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
-    .then((user) => res.status(STATUS_CREATED).send(user))
+module.exports.addUser = (req, res, next) => {
+  const { name, about, avatar, email, password } = req.body;
+  bcrypt
+    .hash(password, 10)
+    .then((hash) =>
+      User.create({
+        name,
+        about,
+        avatar,
+        email,
+        password: hash,
+      })
+    )
+    .then((user) =>
+      res.status(STATUS_CREATED).send({
+        name: user.name,
+        about: user.about,
+        avatar: user.avatar,
+        email: user.email,
+        _id: user._id,
+      })
+    )
     .catch((error) => {
       if (error instanceof mongoose.Error.ValidationError) {
-        res.status(STATUS_BAD_REQUEST).send({ message: error.message });
+        next(new BadRequestError(error.message));
+      } else if (error.code === 11000) {
+        next(new Conflict('Пользователь с таким e-mail уже существует'));
       } else {
-        res
-          .status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: 'На сервере произошла ошибка' });
+        next(error);
       }
     });
 };
 
-module.exports.updateUserData = (req, res) => {
+module.exports.loginUser = (req, res, next) => {
+  const { email, password } = req.body;
+
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', {
+        expiresIn: '7d',
+      });
+      res
+        .cookie('jwt', token, {
+          maxAge: 3600000,
+          httpOnly: true,
+          sameSite: true,
+        })
+        .send({ token });
+    })
+    .catch(next);
+};
+
+module.exports.updateUserData = (req, res, next) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -59,24 +89,21 @@ module.exports.updateUserData = (req, res) => {
     {
       new: true,
       runValidators: true,
-      upsert: false,
-    },
+    }
   )
     .then((user) => {
       res.send(user);
     })
     .catch((error) => {
       if (error instanceof mongoose.Error.ValidationError) {
-        res.status(STATUS_BAD_REQUEST).send({ message: error.message });
+        next(new BadRequestError(error.message));
       } else {
-        res
-          .status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: 'На сервере произошла ошибка' });
+        next(error);
       }
     });
 };
 
-module.exports.updateAvatar = (req, res) => {
+module.exports.updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -84,16 +111,14 @@ module.exports.updateAvatar = (req, res) => {
     {
       new: true,
       runValidators: true,
-    },
+    }
   )
     .then((avatarData) => res.send(avatarData))
     .catch((error) => {
       if (error instanceof mongoose.Error.ValidationError) {
-        res.status(STATUS_BAD_REQUEST).send({ message: error.message });
+        next(new BadRequestError(error.message));
       } else {
-        res
-          .status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: 'На сервере произошла ошибка' });
+        next(error);
       }
     });
 };

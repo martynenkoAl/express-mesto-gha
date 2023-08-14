@@ -1,23 +1,18 @@
 const mongoose = require('mongoose');
 const Card = require('../models/card');
+const BadRequestError = require('../errors/BadRequestError');
+const NotFoundError = require('../errors/NotFoundError');
+const Forbidden = require('../errors/Forbidden');
 
-const {
-  STATUS_OK,
-  STATUS_CREATED,
-  STATUS_BAD_REQUEST,
-  STATUS_NOT_FOUND,
-  STATUS_INTERNAL_SERVER_ERROR,
-} = require('../utils/constants');
+const { STATUS_OK, STATUS_CREATED } = require('../utils/constants');
 
-module.exports.getCards = (req, res) => {
+module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.status(STATUS_OK).send(cards))
-    .catch(() => res
-      .status(STATUS_INTERNAL_SERVER_ERROR)
-      .send({ message: 'На сервере произошла ошибка' }));
+    .catch(next);
 };
 
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   const owner = req.user._id;
 
@@ -25,76 +20,68 @@ module.exports.createCard = (req, res) => {
     .then((card) => res.status(STATUS_CREATED).send(card))
     .catch((error) => {
       if (error instanceof mongoose.Error.ValidationError) {
-        res.status(STATUS_BAD_REQUEST).send({ message: error.message });
+        next(new BadRequestError(error.message));
       } else {
-        res
-          .status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: 'На сервере произошла ошибка' });
+        next(error);
       }
     });
 };
 
-module.exports.deleteCard = (req, res) => {
+module.exports.deleteCard = (req, res, next) => {
   Card.findByIdAndRemove(req.params.cardId)
     .orFail(() => {
-      res
-        .status(STATUS_NOT_FOUND)
-        .send({ message: 'Карточка с таким id не найдена' });
+      throw new NotFoundError('Карточка с таким id не найдена');
     })
-    .then((card) => res.send(card))
+    .then((card) => {
+      if (card.owner.toString() === req.user._id) {
+        res.send(card);
+      } else {
+        next(new Forbidden('Недостаточно прав'));
+      }
+    })
     .catch((error) => {
       if (error instanceof mongoose.Error.CastError) {
-        res.status(STATUS_BAD_REQUEST).send({ message: error.message });
+        next(new BadRequestError(error.message));
       } else {
-        res
-          .status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: 'На сервере произошла ошибка' });
+        next(error);
       }
     });
 };
 
-module.exports.likeCard = (req, res) => {
+module.exports.likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
-    { new: true },
+    { new: true }
   )
     .orFail(() => {
-      res
-        .status(STATUS_NOT_FOUND)
-        .send({ message: 'Карточка с таким id не найдена' });
+      throw new NotFoundError('Карточка с таким id не найдена');
     })
     .then((like) => res.send(like))
     .catch((error) => {
       if (error instanceof mongoose.Error.CastError) {
-        res.status(STATUS_BAD_REQUEST).send({ message: error.message });
+        next(new BadRequestError(error.message));
       } else {
-        res
-          .status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: 'На сервере произошла ошибка' });
+        next(error);
       }
     });
 };
 
-module.exports.dislikeCard = (req, res) => {
+module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
-    { new: true },
+    { new: true }
   )
     .orFail(() => {
-      res
-        .status(STATUS_NOT_FOUND)
-        .send({ message: 'Карточка с таким id не найдена' });
+      throw new NotFoundError('Карточка с таким id не найдена');
     })
     .then((like) => res.send(like))
     .catch((error) => {
       if (error instanceof mongoose.Error.CastError) {
-        res.status(STATUS_BAD_REQUEST).send({ message: error.message });
+        next(new BadRequestError(error.message));
       } else {
-        res
-          .status(STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: 'На сервере произошла ошибка' });
+        next(error);
       }
     });
 };
