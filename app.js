@@ -4,10 +4,8 @@ const mongoose = require('mongoose');
 const helmet = require('helmet');
 const { errors } = require('celebrate');
 const { router } = require('./routes/index');
-const {
-  STATUS_NOT_FOUND,
-  STATUS_INTERNAL_SERVER_ERROR,
-} = require('./utils/constants');
+const NotFoundError = require('./errors/NotFoundError');
+const errorHandler = require('./middlewares/error-handler');
 
 const { PORT = 3000 } = process.env;
 
@@ -27,21 +25,11 @@ mongoose.connect('mongodb://localhost:27017/mestodb');
 
 app.use(router);
 
-app.use('*', (req, res) => {
-  res.status(STATUS_NOT_FOUND).send({ message: 'Страница не найдена' });
+app.use('*', (req, res, next) => {
+  next(new NotFoundError('Маршрут не найден'));
 });
 
 app.use(errors());
-
-app.use((error, req, res, next) => {
-  const { statusCode = STATUS_INTERNAL_SERVER_ERROR, message } = error;
-  res.status(statusCode).send({
-    message:
-      statusCode === STATUS_INTERNAL_SERVER_ERROR
-        ? 'На сервере произошла ошибка'
-        : message,
-  });
-  next();
-});
+app.use(errorHandler);
 
 app.listen(PORT, () => PORT);
